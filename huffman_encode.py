@@ -50,23 +50,18 @@ def main():
         # Reading input file
         with open(sys.argv[1], "rb") as f:
             symbols = [None] * 256
-
             file_data = BitArray(bytes = f.read())
-            for b in file_data.cut(8):
-                byte = int(b.uint)
 
-                if symbols[byte] == None:
-                    symbols[byte] = {
-                                        "data": Node(b),
-                                        "frequency": 0
-                                    }
+        for b in range(0, file_data.length, 8):
+            byte = int(file_data[b:b+8].uint)
 
-                symbols[byte]['frequency'] += 1
-                symbols[byte]['data'].frequency = symbols[byte]['frequency']
+            if symbols[byte] == None:
+                symbols[byte] = Node(b)
+            symbols[byte].frequency += 1
 
         # Getting list only with symbols
         symbols_fitered = list(filter(None, symbols.copy()))
-        symbols_ordered = sorted(symbols_fitered.copy(), key=itemgetter('frequency'), reverse=True)
+        symbols_ordered = sorted(symbols_fitered, key=lambda x: x.frequency, reverse=True)
 
         # Build Huffman tree
         print("Building Huffman Tree...")
@@ -76,21 +71,18 @@ def main():
             node_left = s[-1]
             node_right = s[-2]
             del s[-2:]
-            root.left = node_left['data']
-            root.right = node_right['data']
+            root.left = node_left
+            root.right = node_right
             root.frequency = root.left.frequency + root.right.frequency
-            new_symbol = {
-                "data": root,
-                "frequency": root.frequency
-            }
+            new_symbol = root
             s.append(new_symbol)
-            s = sorted(s, key=itemgetter('frequency'), reverse=True)
+            s = sorted(s, key=lambda x: x.frequency, reverse=True)
 
         # Build codes from Huffman Tree
         code(root) 
 
         # Get info from code
-        max_code_length = symbols_ordered[-1]['data'].code_length
+        max_code_length = symbols_ordered[-1].code_length
         max_code_bits = int(math.ceil(math.log(max_code_length + 1, 2)))
 
         # Adding padding bits to overhead
@@ -103,13 +95,13 @@ def main():
                 overhead.append('0b0')
             else:
                 overhead.append('0b1')
-                overhead.append(BitArray(uint= symbol['data'].code_length,length = max_code_bits))
-                overhead.append(symbol['data'].code)
+                overhead.append(BitArray(uint= symbol.code_length,length = max_code_bits))
+                overhead.append(symbol.code)
 
         # Count padding
         length_total = overhead.length
         for s in symbols_ordered:
-            length_total += s['data'].frequency * s['data'].code_length
+            length_total += s.frequency * s.code_length
         
         # Overwrite padding quantity
         padding = 8 - length_total % 8
@@ -125,9 +117,9 @@ def main():
         print("Writing File...")
         # Building final compressed data
         final_data = overhead
-        for b in file_data.cut(8):
-            byte_int = int(b.uint)
-            final_data.append(symbols[byte_int]['data'].code)
+        for b in range(0, file_data.length, 8):
+            byte_int = int(file_data[b:b+8].uint)
+            final_data.append(symbols[byte_int].code)
         final_data_len = final_data.length
 
         # Write compressed data to output file
@@ -139,9 +131,9 @@ def main():
         avg_code_len    = 0
         symbols_quantity = input_file_length_in_bytes
         for s in symbols_ordered:
-            p = s['data'].frequency / symbols_quantity
+            p = s.frequency / symbols_quantity
             entropy         += p * math.log(p, 2) # entropy
-            avg_code_len    += p * s['data'].code_length
+            avg_code_len    += p * s.code_length
         entropy       = -1 * entropy
 
         print("\n--------Statistics--------")

@@ -23,6 +23,7 @@ def main():
         max_code_bits   = int(math.ceil(math.log(max_code_length + 1, 2)))
         padding_size    = int(file_data[8:11].uint)
 
+        print("\nReading Symbol Codes...")
         # Reading symbols codes
         symbols_data    = file_data[11:]
         symbols = {}
@@ -47,35 +48,30 @@ def main():
         # Skipping padding
         pos += padding_size
 
+        print("\nReading and Writing Compressed Data...")
         # Reading compressed data
         data = symbols_data[pos:]
         final_data = BitArray()
         i = 0
-        while i < data.length:
-        
-            buffer = BitArray(data[i:(i + max_code_length)])
-
-            for size in range(1,max_code_length+1):
-                if size <= 1:
-                    code = BitArray(uint = buffer[0], length=1)
-                else:
-                    code = buffer[:size]
-                # Check if code exists at symbols dict
-                if size in symbols:
-                    if code.bin in symbols[size]:
-                        final_data.append(symbols[size][code.bin]) # Save symbol
-                        break
-            
-            i += size
-        final_data_len = int(final_data.length/8)
-
-        print("Writing File...")
-        # Output file
         with open(output_file_name, "wb") as w:
-            final_data.tofile(w)
+            while i < data.length:
+                buffer = BitArray(data[i:(i + max_code_length)]) 
+                
+                for size in symbols:
+                    if size <= 1:
+                        code = BitArray(uint = buffer[0], length=1)
+                    else:
+                        code = buffer[:size]
+                    # Check if code exists at symbols dict
+                    if code.bin in symbols[size]:
+                        symbols[size][code.bin].tofile(w) # Save symbol
+                        break
+                i += size
+
+        output_file_length_in_bytes = os.path.getsize(output_file_name)
 
         print("\nFile Name:           ", output_file_name)
-        print("Compressed file size:", final_data_len, "Bytes")
+        print("Compressed file size:", output_file_length_in_bytes, "Bytes")
 
 if __name__ == "__main__":
     main()
