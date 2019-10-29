@@ -23,7 +23,7 @@ def main():
         max_code_bits   = int(math.ceil(math.log(max_code_length + 1, 2)))
         padding_size    = int(file_data[8:11].uint)
 
-        print("\nReading Symbol Codes...")
+        print("Reading Symbol Codes...")
         # Reading symbols codes
         symbols_data    = file_data[11:]
         symbols = {}
@@ -48,7 +48,7 @@ def main():
         # Skipping padding
         pos += padding_size
 
-        print("\nReading and Writing Compressed Data...")
+        print("Reading and Writing Compressed Data...")
         # Reading compressed data
         data = symbols_data[pos:]
         final_data = BitArray()

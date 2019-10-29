@@ -128,17 +128,16 @@ def main():
 
         # Statistics from compression
         entropy         = 0
-        avg_code_len    = 0
+        avg_code_len    = final_data_len/input_file_length_in_bytes
         symbols_quantity = input_file_length_in_bytes
         for s in symbols_ordered:
             p = s.frequency / symbols_quantity
             entropy         += p * math.log(p, 2) # entropy
-            avg_code_len    += p * s.code_length
         entropy       = -1 * entropy
 
         print("\n--------Statistics--------")
-        print("Entropy:              %.2f" % entropy)
-        print("Average Code Length:  %.2f" % avg_code_len)
+        print("Entropy:              %.3f Bits/symbol" % entropy)
+        print("Average Code Length:  %.3f Bits/symbol" % avg_code_len)
         print("Compressed data size:", (final_data_len - overhead_len)/8, "Bytes")
         print("Overhead:            ", overhead_len/8, "Bytes")
 
